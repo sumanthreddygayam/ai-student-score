@@ -1,1 +1,1 @@
-AI Student Score Prediction Project
+# ai-student-score
