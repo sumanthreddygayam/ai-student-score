@@ -1,0 +1,27 @@
+name: Deploy AI App to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ai-student-score || git clone https://github.com/sumanthreddygayam/ai-student-score.git && cd ai-student-score
+          git pull origin main
+          pip3 install -r requirements.txt
+          pkill -f app.py || true
+          nohup python3 app.py > app.log 2>&1 &
