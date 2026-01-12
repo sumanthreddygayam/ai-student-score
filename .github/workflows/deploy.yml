@@ -1,4 +1,4 @@
-name: Deploy AI App to AWS
+name: Deploy AI App to AWS EC2
 
 on:
   push:
@@ -10,18 +10,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          cd ai-student-score || git clone https://github.com/sumanthreddygayam/ai-student-score.git && cd ai-student-score
-          git pull origin main
-          pip3 install -r requirements.txt
-          pkill -f app.py || true
-          nohup python3 app.py > app.log 2>&1 &
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🔹 Moving to home directory"
+            cd ~
+
+            echo "🔹 Clone repo if not exists"
+            if [ ! -d "ai-student-score" ]; then
+              git clone https://github.com/sumanthreddygayam/ai-student-score.git
+            fi
+
+            echo "🔹 Enter project directory"
+            cd ai-student-score
+
+            echo "🔹 Pull latest code"
+            git pull origin main
+
+            echo "🔹 Ensure python venv support"
+            sudo apt update
+            sudo apt install python3-venv -y
+
+            echo "🔹 Create virtual environment if missing"
+            if [ ! -d "venv" ]; then
+              python3 -m venv venv
+            fi
+
+            echo "🔹 Activate virtual environment"
+            source venv/bin/activate
+
+            echo "🔹 Install dependencies"
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            echo "🔹 Stop old app if running"
+            pkill -f app.py || true
+
+            echo "🔹 Start app in background"
+            nohup python app.py > app.log 2>&1 &
+
+            echo "✅ Deployment completed successfully"
