@@ -13,47 +13,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Deploy to EC2 via SSH
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "🔹 Move to home directory"
             cd ~
 
-            echo "🔹 Clone repo if not exists"
             if [ ! -d "ai-student-score" ]; then
               git clone https://github.com/sumanthreddygayam/ai-student-score.git
             fi
 
-            echo "🔹 Enter project directory"
             cd ai-student-score
-
-            echo "🔹 Pull latest code"
             git pull origin main
 
-            echo "🔹 Ensure python venv support"
             sudo apt update
             sudo apt install python3-venv -y
 
-            echo "🔹 Create venv if missing"
             if [ ! -d "venv" ]; then
               python3 -m venv venv
             fi
 
-            echo "🔹 Activate venv"
             source venv/bin/activate
-
-            echo "🔹 Install dependencies"
-            pip install --upgrade pip
             pip install -r requirements.txt
 
-            echo "🔹 Stop old app safely (ignore SIGTERM)"
-            pkill -9 -f "python app.py" || true
-
-            echo "🔹 Start app in background"
-            nohup python app.py > app.log 2>&1 &
-
-            echo "✅ Deployment finished successfully"
+            sudo systemctl restart ai-student-score
