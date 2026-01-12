@@ -10,7 +10,7 @@ with open("model/model.pkl", "rb") as f:
 
 @app.route("/")
 def home():
-    return "AI Student Score Prediction API Running"
+    return "AI Student Score Prediction API Running--running good"
 
 @app.route("/predict", methods=["POST"])
 def predict():
